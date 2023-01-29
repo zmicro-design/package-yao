@@ -1,0 +1,98 @@
+#!/bin/bash
+
+install() {
+  # prepare vars
+  local name="$PACKAGE_CORE_NAME"
+
+  log::info "[$(timestamp)][package][$name] preparing ..."
+
+  # get system os/arch
+  local arch="$PACKAGE_OS_ARCH"
+  local kernel="$PACKAGE_OS_KERNEL"
+  local platform="$PACKAGE_OS_PLATFORM"
+  # usr_bin_dir
+  local usr_bin_dir="$PACKAGE_USER_BIN_DIR"
+  local tmp_dir="$PACKAGE_TMP_DIR"
+
+  # #
+  # case $platform in
+  # darwin)
+  #   platform="osx"
+  #   ;;
+  # linux) ;;
+
+  # *)
+  #   log::error "[$(timestamp)] unsupport platform: $platform"
+  #   ;;
+  # esac
+
+  # case $arch in
+  # arm64) ;;
+
+  # amd64)
+  #   arch="x86_64"
+  #   ;;
+  # *)
+  #   log::error "[$(timestamp)] unsupport arch: $arch"
+  #   ;;
+  # esac
+  # # 
+
+  # files
+  local tmp_file="$name"
+  local source_bin_file="${tmp_file}"
+  # local target_bin_file="$usr_bin_dir/$name"
+
+  # prepare context
+  cd $tmp_dir
+
+  # reference: https://github.com/YaoApp/yao/releases
+  # example:
+  #   https://github.com/YaoApp/yao/releases/download/v0.10.2/yao-0.10.2-darwin-amd64
+  #   https://github.com/YaoApp/yao/releases/download/v0.10.2/yao-0.10.2-darwin-arm64
+  #   https://github.com/YaoApp/yao/releases/download/v0.10.2/yao-0.10.2-linux-amd64
+  #   https://github.com/YaoApp/yao/releases/download/v0.10.2/yao-0.10.2-linux-arm64
+  # generate url
+  local url="${PACKAGE_CORE_RELEASE_DOWNLOAD}/$PACKAGE_CORE_VERSION/${name}-${PACKAGE_CORE_VERSION#v}-${platform}-${arch}"
+  log::debug "[$(timestamp)][package][$name][$kernel][$arch] url: $url, file: ${tmp_file}, tmp_dir: $tmp_dir"
+
+  # download
+  log::info "[$(timestamp)][package][$name] downloading ..."
+  os::download $tmp_file $url
+
+  # install
+  log::info "[$(timestamp)][package][$name] installing ..."
+  os::install $source_bin_file $usr_bin_dir $name
+
+# Complex like maven-mvnd
+#   # make executable
+#   log::info "[$(timestamp)][package][$name] making executable ..."
+#   chmod 755 $source_bin_file
+
+#   # install
+#   if [ -d "$usr_lib_dir/${name}" ]; then
+#     log::info "[$(timestamp)][package][$name] removing old lib ..."
+#     sudo rm -rf $usr_lib_dir/${name}
+#   fi
+#   log::info "[$(timestamp)][package][$name] installing lib ..."
+#   sudo mv $lib_dir $usr_lib_dir/${name}
+
+#   # install
+#   log::info "[$(timestamp)][package][$name] installing bin ..."
+#   sudo ln -sf $usr_lib_dir/${name}/bin/${PACKAGE_CORE_BIN_NAME} $usr_bin_dir/${PACKAGE_CORE_BIN_NAME}
+
+#   # profile
+#   log::success "[$(timestamp)][package][$name] config MVND_HOME=$usr_lib_dir/${name} to global env file ..."
+#   local envs=$(
+#     cat <<-END
+# export MVND_HOME=$usr_lib_dir/${name}
+# END
+# )
+#   config::profile "# ZMICRO PACKAGE MAVEN-MVND" "$envs"
+
+  # clean
+  log::info "[$(timestamp)][package][$name] cleaning ..."
+  rm -rf $tmp_dir
+}
+
+export -f install
